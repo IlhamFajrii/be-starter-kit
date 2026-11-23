@@ -1,0 +1,156 @@
+{
+  "info": {
+    "name": "REST API Starter Kit",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Login admin",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"{{adminPassword}}\"}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 dengan access dan refresh token', () => { pm.response.to.have.status(200); const b = pm.response.json(); pm.expect(b.accessToken).to.be.a('string'); pm.expect(b.refreshToken).to.be.a('string'); });",
+        "pm.collectionVariables.set('adminToken', pm.response.json().accessToken);",
+        "pm.collectionVariables.set('refreshToken', pm.response.json().refreshToken);"
+      ] } }]
+    },
+    {
+      "name": "2. Login salah -> 401",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"salah-total\"}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('401 dengan format error konsisten', () => { pm.response.to.have.status(401); const b = pm.response.json(); pm.expect(b).to.have.keys('statusCode', 'error', 'message'); });"
+      ] } }]
+    },
+    {
+      "name": "3. Profil sendiri (terproteksi)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/users/me"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 tanpa passwordHash', () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.not.have.property('passwordHash'); });"
+      ] } }]
+    },
+    {
+      "name": "4. Tanpa token -> 401",
+      "request": { "method": "GET", "url": "{{baseUrl}}/users/me" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('401', () => pm.response.to.have.status(401));"
+      ] } }]
+    },
+    {
+      "name": "5. Login user biasa",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\"email\":\"{{userEmail}}\",\"password\":\"{{userPassword}}\"}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('userToken', pm.response.json().accessToken);"
+      ] } }]
+    },
+    {
+      "name": "6. User biasa daftar users -> 403",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+        "url": "{{baseUrl}}/users"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('403', () => pm.response.to.have.status(403));"
+      ] } }]
+    },
+    {
+      "name": "7. Refresh -> token baru",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/refresh",
+        "body": { "mode": "raw", "raw": "{\"refreshToken\":\"{{refreshToken}}\"}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 dan refresh token berganti', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().refreshToken).to.not.eql(pm.collectionVariables.get('refreshToken')); });",
+        "pm.collectionVariables.set('oldRefreshToken', pm.collectionVariables.get('refreshToken'));",
+        "pm.collectionVariables.set('adminToken', pm.response.json().accessToken);",
+        "pm.collectionVariables.set('refreshToken', pm.response.json().refreshToken);"
+      ] } }]
+    },
+    {
+      "name": "8. Refresh token lama -> 401",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/refresh",
+        "body": { "mode": "raw", "raw": "{\"refreshToken\":\"{{oldRefreshToken}}\"}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('401', () => pm.response.to.have.status(401));"
+      ] } }]
+    },
+    {
+      "name": "9. Admin daftar users (token baru)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/users"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 dan array', () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.be.an('array'); });"
+      ] } }]
+    },
+    {
+      "name": "10. Admin buat user",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/users",
+        "body": { "mode": "raw", "raw": "{\"email\":\"pm-{{$timestamp}}@demo.test\",\"name\":\"User Postman\",\"password\":\"password-postman-1\"}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('201', () => pm.response.to.have.status(201));"
+      ] } }]
+    },
+    {
+      "name": "11. Input tidak valid -> 400 per field",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/users",
+        "body": { "mode": "raw", "raw": "{\"email\":\"bukan-email\",\"name\":\"\",\"password\":\"pendek\"}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('400 dengan pesan per field', () => { pm.response.to.have.status(400); const m = pm.response.json().message; ['email', 'name', 'password'].forEach(f => pm.expect(m.some(x => x.startsWith(f))).to.eql(true)); });"
+      ] } }]
+    },
+    {
+      "name": "12. Logout",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/logout",
+        "body": { "mode": "raw", "raw": "{\"refreshToken\":\"{{refreshToken}}\"}" }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('204', () => pm.response.to.have.status(204));"
+      ] } }]
+    }
+  ],
+  "variable": [
+    { "key": "adminToken", "value": "" },
+    { "key": "userToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "oldRefreshToken", "value": "" }
+  ]
+}
