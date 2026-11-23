@@ -7,7 +7,8 @@ services:
       MYSQL_USER: app
       MYSQL_PASSWORD: app
     ports:
-      - "3306:3306"
+      # Hanya localhost: password root database demo lemah, jangan terbuka ke jaringan.
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysqldata:/var/lib/mysql
     healthcheck:

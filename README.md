@@ -100,6 +100,9 @@ npx newman run postman/starter-kit.postman_collection.json -e postman/local.post
 - Belum ada pembersihan baris refresh token yang kedaluwarsa.
 - Belum ada pembatasan percobaan login (rate limiting, di luar lingkup MVP) dan header keamanan (helmet). Untuk deployment publik, pasang di depan API (reverse proxy) atau tambahkan sendiri.
 - `/docs` terbuka tanpa autentikasi.
+- `npm audit --omit=dev` melaporkan 4 temuan severity tinggi, semuanya pada rantai CLI Prisma 6 (`prisma` → `@prisma/config` → `effect`, `deepmerge-ts`). Itu berjalan saat build dan `migrate deploy` dengan konfigurasi milik sendiri, bukan pada request HTTP, dan `@prisma/client` tidak terdampak. Perbaikannya hanya lewat Prisma 7 (perubahan besar), belum dikerjakan.
+- Aplikasi menolak start dengan `JWT_SECRET` contoh dari repo ini, kecuali `SEED_DEMO=true`. Port database di Compose hanya terikat ke `127.0.0.1`.
+- Password dibatasi 8 sampai 72 karakter karena bcrypt hanya membaca 72 byte pertama.
 - Tidak ada pendaftaran mandiri. Akun dibuat ADMIN lewat `POST /users`.
 - Di luar lingkup: OAuth pihak ketiga, email, upload file, rate limiting.
 

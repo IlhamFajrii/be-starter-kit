@@ -57,6 +57,15 @@ describe('Users dan peran', () => {
     expect(extra.body.message).toContain('property isSuper should not exist');
   });
 
+  it('password lebih dari 72 karakter ditolak (bcrypt memotong diam-diam)', async () => {
+    const res = await http()
+      .post('/users')
+      .set('Authorization', admin)
+      .send({ email: 'panjang@demo.test', name: 'P', password: 'a'.repeat(73) })
+      .expect(400);
+    expect(res.body.message.some((m: string) => m.startsWith('password'))).toBe(true);
+  });
+
   it('nilai null ditolak 400 per field, bukan 500', async () => {
     const res = await http()
       .post('/users')

@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { execSync } from 'node:child_process';
 
 export const ADMIN_URL =
-  process.env.E2E_ADMIN_URL ?? 'mysql://root:root@localhost:3306/mysql';
+  process.env.E2E_ADMIN_URL ?? 'mysql://root:root@127.0.0.1:3306/mysql';
 
 export async function withAdmin(sql: string) {
   const admin = new PrismaClient({ datasources: { db: { url: ADMIN_URL } } });

@@ -14,6 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
+      algorithms: ['HS256'], // kunci algoritma, jangan biarkan token memilih sendiri
       secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
     });
   }

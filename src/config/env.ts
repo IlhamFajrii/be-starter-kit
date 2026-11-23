@@ -7,6 +7,10 @@ export function validateEnv(env: Record<string, unknown>) {
   if (String(env.JWT_SECRET).length < 32) {
     throw new Error('JWT_SECRET minimal 32 karakter');
   }
+  // Secret contoh di repo publik bisa dibaca siapa saja, jadi hanya boleh dipakai di mode demo.
+  if (env.SEED_DEMO !== 'true' && /^(demo-only-secret|ganti-dengan)/.test(String(env.JWT_SECRET))) {
+    throw new Error('JWT_SECRET masih berupa contoh dari repo. Setel secret acak sendiri.');
+  }
   // Tanpa ini nilai salah baru meledak saat login (mis. "3600" dibaca jsonwebtoken sebagai 3600 ms).
   const { JWT_EXPIRES_IN: exp, REFRESH_EXPIRES_DAYS: days, PORT: port } = env;
   if (exp !== undefined && !/^[1-9]\d*[smhd]$/.test(String(exp))) {

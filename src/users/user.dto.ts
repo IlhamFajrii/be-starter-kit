@@ -12,7 +12,7 @@ export class CreateUserDto {
 
   @IsString()
   @MinLength(8)
-  @MaxLength(128)
+  @MaxLength(72) // bcrypt hanya membaca 72 byte pertama, sisanya diam-diam diabaikan
   password!: string;
 
   @IsOptional()

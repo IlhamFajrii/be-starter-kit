@@ -25,6 +25,19 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ ...ok, REFRESH_EXPIRES_DAYS: v })).toThrow(/REFRESH_EXPIRES_DAYS/);
   });
 
+  it.each(['demo-only-secret-ganti-di-deployment-0123456789', 'ganti-dengan-string-acak-minimal-32-karakter'])(
+    'menolak secret contoh dari repo di luar mode demo: %s',
+    (secret) => {
+      expect(() => validateEnv({ ...ok, JWT_SECRET: secret })).toThrow(/contoh dari repo/);
+      expect(() => validateEnv({ ...ok, JWT_SECRET: secret, SEED_DEMO: 'false' })).toThrow(/contoh dari repo/);
+    },
+  );
+
+  it('mengizinkan secret contoh hanya saat SEED_DEMO=true (compose demo lokal)', () => {
+    const demo = { ...ok, JWT_SECRET: 'demo-only-secret-ganti-di-deployment-0123456789', SEED_DEMO: 'true' };
+    expect(validateEnv(demo)).toBe(demo);
+  });
+
   it('menolak PORT yang bukan angka', () => {
     expect(() => validateEnv({ ...ok, PORT: 'http' })).toThrow(/PORT/);
   });
